@@ -115,3 +115,10 @@ a {
   height: 80%;
   width: 25%;
 }
+
+
+.horizontalLine {
+  border-top: 2px solid #fff;
+  margin: 20px 0;
+  width: 70%;
+}

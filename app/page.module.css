@@ -82,6 +82,8 @@
   border: 2px solid #ddd;
   border-radius: 6px;
   width: 100%;
+  transition: 0.1s ease;
+  z-index: 1111;
 }
 
 .formInput:hover{
@@ -114,5 +116,5 @@
 
 .toggleText:hover {
   text-decoration: underline;
-  color: #e74c3c;
+  color: #9ab1ec;
 }
