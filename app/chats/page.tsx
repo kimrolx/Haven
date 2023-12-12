@@ -1,9 +1,10 @@
+// chats.tsx
 "use client";
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-import { getFirestore, onSnapshot, collection, addDoc, orderBy, query, serverTimestamp, Timestamp } from "firebase/firestore";
+import { getFirestore, onSnapshot, collection, Timestamp } from "firebase/firestore";
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, app } from "../../firebase/clientApp";
@@ -23,89 +24,66 @@ interface Message {
   data: MessageData;
 }
 
+interface UserData {
+  uid: string;
+  displayName: string;
+}
+
 export default function Chats() {
   const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
   // Use the useRouter hook to get the router instance
   const router = useRouter();
 
-  useEffect(() => {
-    const q = query(collection(db, 'messages'), orderBy('timestamp'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data() as MessageData,
-        }))
-      );
-    });
-    return unsubscribe;
-  }, []);
+  // Modify handleSelectUser to navigate to dynamic route
+  const handleSelectUser = (selectedUser: User) => {
+    const sortedUserIds = [selectedUser.uid, user?.uid].sort();
+    const chatroomID = `${sortedUserIds[0]}_${sortedUserIds[1]}`;
+    router.push(`/chats/${chatroomID}`);
+  };
+
 
   useEffect(() => {
-    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
     });
 
-    return authUnsubscribe;
-  }, []);
+    const unsubscribeFirestore = onSnapshot(collection(db, 'users'), (snapshot) => {
+      console.log('Snapshot received:', snapshot.docs);
 
-  const sendMessage = async () => {
-    await addDoc(collection(db, 'messages'), {
-      uid: user?.uid,
-      photoURL: user?.photoURL,
-      displayName: user?.displayName,
-      text: newMessage,
-      timestamp: serverTimestamp(),
+      const usersData = snapshot.docs
+        .map((doc) => ({
+          uid: doc.id,
+          displayName: doc.data().displayName || '',
+        }))
+        .filter((u) => u.uid !== user?.uid);
+
+      console.log('Users data:', usersData);
+      setUsers(usersData as User[]);
+    }, (error) => {
+      console.error('Error fetching users:', error);
     });
 
-    setNewMessage('');
-  };
+    return () => {
+      unsubscribeAuth();
+      unsubscribeFirestore();
+    };
+  }, [user]);
 
-  //HandleLogout
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/');
-  };
 
   return (
-    <div className="App">
-      <div className='flex justify-center bg-gray-800 py-10 min-h-screen' >
-        {user ? (
-          <div>
-            <div> Logged in as {user.displayName}</div>
-            <input
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-            />
-            <button className=' bg-white rounded-[10px] hover:bg-blue-400 p-3' onClick={sendMessage}>Send Message</button>
-            <button className='mb-8 bg-white rounded-[10px] p-3' onClick={handleLogout}>Logout</button>
-
-            <div className="flex flex-col gap-5">
-
-              {messages.map(msg => (
-                <div key={msg.id} className={`message flex ${msg.data.uid === user.uid ? 'justify-end' : 'justify-start  '}`}>
-                  <div className={`message flex flex-row p-3 gap-3 rounded-[20px] items-center ${msg.data.uid === user.uid ? ' text-white bg-blue-500' : ' bg-white '}`}>
-                    <Image
-                      src={msg.data.photoURL}
-                      width={50}
-                      height={50}
-                      alt="(Photo)" />
-                    {msg.data.text}
-                  </div>
-                </div>
-              ))}
-            </div>
+    <div className="user-list">
+      {users
+        .filter((u) => user && u.uid !== user.uid)
+        .map((u) => (
+          <div key={u.uid} onClick={() => handleSelectUser(u)}>
+            {u.displayName}
           </div>
-        ) :
-
-          (
-            <p>Login to view messages</p>
-          )}
-
-      </div>
+        ))}
     </div>
   );
+
 }

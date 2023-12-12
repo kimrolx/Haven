@@ -49,11 +49,11 @@
   backdrop-filter: blur(4.7px);
   -webkit-backdrop-filter: blur(4.7px);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  position: relative;
+  padding-top: 0;
+  padding-bottom: 80px;
 }
 
 .titleContainer {
-  position: absolute;
   top: 0;
   align-items: center;
   justify-content: center;
@@ -64,6 +64,8 @@
 
 .title h1 {   /* naa ko gi adjust here */
   font-size: 1.5em;
+  padding: 0;
+  margin: 0;
 }
 
 .form {
@@ -90,15 +92,36 @@
   border-color:#5e45dd;
 }
 
-.formButton {
+.loginButton {
   background-color: #fff;
   color: #7d8be7;
-  padding: 12px;
+  padding: 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
   font-size: 1.2em;
   transition: background-color 0.3s, color 0.3s;
+}
+
+.loginButton:hover {
+  background-color: #7d8be7;
+  color: #fff;
+}
+
+.formButton {
+  display: flex;
+  background-color: #fff;
+  color: #7d8be7;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.formButton p {
+  align-self: center;
 }
 
 .formButton:hover {
