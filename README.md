@@ -17,3 +17,4 @@ Haven is a real-time chat web application built with Next.js, React, TypeScript,
 
 - [react-firebase-hooks](https://github.com/CSFrequency/react-firebase-hooks): React hooks for Firebase.
 - [firebase](https://firebase.google.com/docs/web/setup): Firebase SDK for JavaScript.
+- [react-toastify](https://github.com/fkhadra/react-toastify): React notifications made easy in both React and Next.js.
