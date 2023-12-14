@@ -2,7 +2,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import styles from "./page.module.css";
 import {
    getDoc,
@@ -23,7 +22,6 @@ const db = getFirestore(app);
 
 interface MessageData {
    uid: string;
-   photoURL: string;
    displayName: string;
    text: string;
    timestamp: Timestamp;
@@ -44,11 +42,12 @@ export default function ChatRoom({
    const [user, setUser] = useState<User | null>(null);
    const [messages, setMessages] = useState<Message[]>([]);
    const [newMessage, setNewMessage] = useState("");
-   const [loading, setLoading] = useState(true);
+   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
    const router = useRouter();
    const { chatroomID } = params;
 
+   //Listener for changes to the messages collection
    useEffect(() => {
       if (!chatroomID) {
          return;
@@ -66,27 +65,33 @@ export default function ChatRoom({
                   data: doc.data() as MessageData,
                }))
             );
-            setLoading(false);
          },
          (error) => {
             console.error("Error fetching messages:", error);
-            setLoading(false);
          }
       );
 
       return unsubscribe;
    }, [chatroomID]);
 
+   //Listener for changes in Auth State (Logged in or Signed out)
    useEffect(() => {
-      const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-         console.log("User Object:", user);
-         setUser(user);
-      });
+      const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
 
+         if (user) {
+            setUser(user);
+
+            const userDisplayName = await getSenderDisplayName(user.uid);
+            setUserDisplayName(userDisplayName);
+         } else {
+            setUser(null);
+            setUserDisplayName(null);
+         }
+      });
       return authUnsubscribe;
    }, []);
 
-   //Handle Sending of Messages
+   //Sending of Messages Handler
    const sendMessage = async () => {
       if (!user || !chatroomID) {
          return;
@@ -95,15 +100,10 @@ export default function ChatRoom({
       const chatRoomDocRef = doc(db, "chat_rooms", chatroomID);
       const messagesCollectionRef = collection(chatRoomDocRef, "messages");
 
-      // Ensure that the user object has the displayName property
-      const userName = user.displayName || "Anonymous";
-
-      // Retrieve the user's displayName from the database
-      const userDisplayName = await getUserDisplayName(user.uid);
+      const userDisplayName = await getSenderDisplayName(user.uid);
 
       await addDoc(messagesCollectionRef, {
          uid: user?.uid || "",
-         // photoURL: user?.photoURL || '',
          displayName: userDisplayName,
          text: newMessage,
          timestamp: serverTimestamp(),
@@ -112,8 +112,8 @@ export default function ChatRoom({
       setNewMessage("");
    };
 
-   //Get User Display Names
-   const getUserDisplayName = async (uid: string) => {
+   //Get Display Names
+   const getSenderDisplayName = async (uid: string) => {
       const userDocRef = doc(db, "users", uid);
 
       try {
@@ -121,7 +121,6 @@ export default function ChatRoom({
 
          if (docSnapshot.exists()) {
             const { displayName } = docSnapshot.data();
-            console.log("User DisplayName:", displayName);
             return displayName;
          } else {
             console.log("User not found");
@@ -144,15 +143,38 @@ export default function ChatRoom({
       router.replace("/");
    };
 
+  
+   
    return (
       <div className={styles.container}>
-         <button className={styles.button} onClick={handleGoBack}>
-            Go Back To Chat List
-         </button>
          {user ? (
-            <div className={styles.container}>
-               <div className={styles.header}>Chat Room</div>
-               <div className={styles.userInfo}>Logged in as {user.email}</div>
+            <div className={styles.flexContainer}>
+                <div className={styles.header}>
+                  Chat Room
+               <div className={styles.userInfo}>
+                  <button className={styles.backButton} onClick={handleGoBack}>
+                     Go Back
+                  </button>
+                  <button className={styles.logoutButton} onClick={handleLogout}>
+                     Logout
+                  </button>
+                  {/* {userDisplayName &&(<p className={styles.userInfoName}>{userDisplayName}</p>
+                  )}  */}
+                  </div>
+               </div>
+               <div className={styles.messages}>
+                  {messages.map((msg) => (
+                     <div
+                        key={msg.id}
+                        className={`${styles.message} ${msg.data.uid === user.uid
+                           ? styles.sentMessage
+                           : styles.receivedMessage
+                           }`}>
+                        <strong>{msg.data.displayName}: </strong>
+                        {msg.data.text}
+                     </div>
+                  ))}
+               </div>
                <div className={styles.messageInputContainer}>
                   <input
                      className={styles.messageInput}
@@ -166,35 +188,12 @@ export default function ChatRoom({
                      Send
                   </button>
                </div>
-               <div className={styles.messages}>
-                  {messages.map((msg) => (
-                     <div
-                        key={msg.id}
-                        className={`${styles.message} ${
-                           msg.data.uid === user.uid
-                              ? styles.sentMessage
-                              : styles.receivedMessage
-                        }`}>
-                        {msg.data.photoURL && (
-                           <Image
-                              src={msg.data.photoURL}
-                              width={50}
-                              height={50}
-                              alt="(Photo)"
-                           />
-                        )}
-                        <strong>{msg.data.displayName}: </strong>
-                        {msg.data.text}
-                     </div>
-                  ))}
-               </div>
-               <button className={styles.logoutButton} onClick={handleLogout}>
-                  Logout
-               </button>
             </div>
-         ) : (
-            <p>Login to view messages</p>
-         )}
+         ) :
+          (
+            <p className={styles.p} >Login to view messages</p>
+         )
+         }
       </div>
    );
 }

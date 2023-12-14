@@ -1,0 +1,43 @@
+/* page.module.css */
+
+.userList {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30%;
+    padding: 50px;
+    text-align: center;
+    align-items: center;
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5.3px);
+    -webkit-backdrop-filter: blur(5.3px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.userList h1 {
+    font-size: 40px;
+    background: linear-gradient(to right, #d9eaf6, #612ad8);
+    background-clip: text;
+    color: transparent;
+    padding-bottom: 30px;
+}
+
+.userItem {
+    font-size: 20px;
+    border: 1px solid white;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    transition: background-color 0.5s, color 0.5s;
+}
+
+.userItem:hover {
+    color: black;
+    background: linear-gradient(to right, #d9eaf6, #612ad8);
+    cursor: pointer;
+}

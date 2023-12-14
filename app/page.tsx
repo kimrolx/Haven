@@ -7,33 +7,36 @@ import styles from "./page.module.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import {
-   createUserWithEmailAndPassword,
-   signInWithEmailAndPassword,
-} from "firebase/auth";
-import { setDoc, doc, collection, getFirestore } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc, collection, getFirestore, getDoc } from "firebase/firestore";
 import { auth, app } from "../firebase/clientApp";
 import { sendEmailVerification } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import Modal from 'react-modal';
+
+
+interface DisplayNameModalProps {
+   isOpen: boolean;
+   onRequestClose: () => void;
+   onSubmit: (displayName: string) => void;
+}
 
 export default function Home() {
    const router = useRouter();
    const [loginData, setLoginData] = useState({ email: "", password: "" });
-   const [registerData, setRegisterData] = useState({
-      email: "",
-      password: "",
-      displayName: "",
-   });
+   const [registerData, setRegisterData] = useState({ email: "", password: "", displayName: "" });
    const [isLogin, setIsLogin] = useState(true);
 
    const db = getFirestore(app);
    const [isLoading, setIsLoading] = useState(false);
+   const [modalIsOpen, setModalIsOpen] = useState(false);
 
    const startLoading = () => {
       setIsLoading(true);
    };
 
    const stopLoading = () => {
-      setIsLoading(false);
+      setIsLoading(false); 
    };
 
    //Registration
@@ -48,13 +51,11 @@ export default function Home() {
          );
          const user = userCredential.user;
 
-         if (registerData.displayName) {
-            await addUserDataToFirestore(
-               user.uid,
-               registerData.displayName,
-               registerData.email
-            );
-         }
+         await addUserDataToFirestore(
+            user.uid,
+            registerData.displayName,
+            registerData.email
+         );
 
          await sendEmailVerificationToUser(user.email);
       } catch (error) {
@@ -66,7 +67,6 @@ export default function Home() {
 
    //Send Verification Email to User Email
    const sendEmailVerificationToUser = async (user: String | null) => {
-      // not sure sa type
       try {
          startLoading();
          await sendEmailVerification(auth.currentUser!).then(() => {
@@ -122,8 +122,49 @@ export default function Home() {
       setIsLogin(!isLogin);
    };
 
+   const DisplayNameModal: React.FC<DisplayNameModalProps> = ({ isOpen, onRequestClose, onSubmit }) => {
+      const [displayName, setDisplayName] = useState('');
+    
+      const handleSubmit = () => {
+        // Call the onSubmit function with the entered display name
+        onSubmit(displayName);
+        setModalIsOpen(false);
+      };
+    
+      return (
+        <Modal isOpen={isOpen} onRequestClose={onRequestClose} className={styles.content} overlayClassName={styles.overlay}>
+          <h2>Enter Your Display Name</h2>
+          <input
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+          <button onClick={handleSubmit}>Submit</button>
+        </Modal>
+      );
+    };
+
    const handleGoogleLogin = async () => {
-      // TODO
+      try {
+         const provider = new GoogleAuthProvider();
+         const result = await signInWithPopup(auth, provider);
+         const user = result.user;
+
+         const userDocRef = doc(collection(db, 'users'), user.uid);
+         const userDocSnap = await getDoc(userDocRef);
+     
+         if (!userDocSnap.exists()) {
+            setModalIsOpen(true);
+            return; 
+          }
+     
+         // Display a success message or redirect the user
+         toast.success('Successfully signed in with Google.');
+         router.push('/chats');
+       } catch (error) {
+         console.error(error);
+         toast.error('An error occurred while signing in with Google.');
+       }
    };
 
    return (
@@ -169,9 +210,7 @@ export default function Home() {
                   Password:
                   <input
                      type="password"
-                     value={
-                        isLogin ? loginData.password : registerData.password
-                     }
+                     value={ isLogin ? loginData.password : registerData.password }
                      onChange={(e) =>
                         isLogin
                            ? setLoginData({
@@ -234,6 +273,14 @@ export default function Home() {
             </button>
          </div>
          <ToastContainer position="top-center" theme="dark" />
+
+         <DisplayNameModal
+            isOpen={modalIsOpen}
+            onRequestClose={() => setModalIsOpen(false)}
+            onSubmit={(displayName) => {
+               console.log('Submitted display name: ', displayName);
+            }}
+         />
       </div>
    );
 }

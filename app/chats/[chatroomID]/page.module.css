@@ -1,53 +1,61 @@
 .container {
+    position: absolute;
+    top: 0%;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    width: 75%; 
+    border: 1px solid white;
+    background-color: black;
+    color: #fff;
+    height: 100vh;
+  }
+
+  .flexContainer{
     display: flex;
     flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #000; /* Updated to black */
-    padding: 20px;
-    color: #fff; /* Text color set to white */
+    height:100%;
   }
   
   .header {
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 20px;
-  }
-  
-  .button {
-    background-color: #2196f3;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    padding: 10px;
-    cursor: pointer;
-    margin-bottom: 20px;
-  }
+    text-align: center;
+  }  
   
   .userInfo {
-    margin-bottom: 20px;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 0.5mm solid white;
+    display: flex;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
   }
   
   .messageInputContainer {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    padding-top: 20px;
+    margin-top: auto;
+    padding-bottom: 10px;
+    padding-left: 5px;
+
   }
   
   .messageInput {
-    flex-grow: 1;
+    width: 95%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
   }
   
   .sendMessageButton {
-    background-color: #4caf50;
+    background-color: #612ad8;
     color: #fff;
     border: none;
     border-radius: 5px;
     padding: 10px;
     cursor: pointer;
+    padding-right: 10px;
   }
   
   .logoutButton {
@@ -56,9 +64,20 @@
     border: none;
     border-radius: 5px;
     padding: 10px;
-    margin-top: 20px;
     cursor: pointer;
-    width: 250px;
+    width: 100px;
+  }
+
+  .backButton{
+    background-color: #5e45dd ;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    width: 150px;
+    margin-left: 80%;
+    margin-right: 10px;
   }
   
   .messages {
@@ -74,13 +93,18 @@
   }
   
   .sentMessage {
+    margin-top: 5px;
+    margin-right: 10px;
     align-self: flex-end;
-    background-color: #2196f3;
+    background-color: #7d8be7;
     color: #fff;
   }
   
   .receivedMessage {
     align-self: flex-start;
-    background-color: #fff;
+    margin-left: 10px;
+    background-color: #b9d1f1;
     color: #000;
+    margin-top: 5px;
   }
+

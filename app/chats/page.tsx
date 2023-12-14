@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation';
-import { ToastContainer, toast } from 'react-toastify';
+import styles from './page.module.css';
 
 import { getFirestore, onSnapshot, collection } from "firebase/firestore";
 import type { User } from 'firebase/auth';
@@ -15,13 +15,6 @@ export default function Chats() {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const router = useRouter();
-
-  //Navigate to Dynamic Route
-  const handleSelectUser = (selectedUser: User) => {
-    const sortedUserIds = [selectedUser.uid, user?.uid].sort();
-    const chatroomID = `${sortedUserIds[0]}_${sortedUserIds[1]}`;
-    router.push(`/chats/${chatroomID}`);
-  };
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -36,7 +29,7 @@ export default function Chats() {
         }))
         .filter((u) => u.uid !== user?.uid);
 
-      const verifiedUsers = usersData.filter((u) => {
+        const verifiedUsers = usersData.filter((u) => {
         const authUser = auth.currentUser;
         return authUser && authUser.emailVerified;
       });
@@ -52,14 +45,21 @@ export default function Chats() {
     };
   }, [user]);
 
+  //Navigate to Dynamic Route
+  const handleSelectUser = (selectedUser: User) => {
+    const sortedUserIds = [selectedUser.uid, user?.uid].sort();
+    const chatroomID = `${sortedUserIds[0]}_${sortedUserIds[1]}`;
+    router.push(`/chats/${chatroomID}`);
+  };
+
   return (
-    <div className="user-list">
+    <div className={styles.userList}>
+      <h1>List of Verified Users</h1>
       {users.map((u) => (
-        <div key={u.uid} onClick={() => handleSelectUser(u)}>
+        <div className={styles.userItem} key={u.uid} onClick={() => handleSelectUser(u)}>
           {u.displayName}
         </div>
       ))}
-      <ToastContainer />
     </div>
   );
 }
