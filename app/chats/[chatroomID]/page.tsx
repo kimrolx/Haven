@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
-import {
+import { 
    getDoc,
    doc,
    getFirestore,
@@ -13,7 +13,7 @@ import {
    orderBy,
    query,
    serverTimestamp,
-   Timestamp,
+   Timestamp
 } from "firebase/firestore";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth, app } from "../../../firebase/clientApp";
@@ -81,7 +81,7 @@ export default function ChatRoom({
          if (user) {
             setUser(user);
 
-            const userDisplayName = await getSenderDisplayName(user.uid);
+            const userDisplayName = await getUserDisplayName(user.uid);
             setUserDisplayName(userDisplayName);
          } else {
             setUser(null);
@@ -100,7 +100,7 @@ export default function ChatRoom({
       const chatRoomDocRef = doc(db, "chat_rooms", chatroomID);
       const messagesCollectionRef = collection(chatRoomDocRef, "messages");
 
-      const userDisplayName = await getSenderDisplayName(user.uid);
+      const userDisplayName = await getUserDisplayName(user.uid);
 
       await addDoc(messagesCollectionRef, {
          uid: user?.uid || "",
@@ -112,8 +112,8 @@ export default function ChatRoom({
       setNewMessage("");
    };
 
-   //Get Display Names
-   const getSenderDisplayName = async (uid: string) => {
+   //Get Display Name
+   const getUserDisplayName = async (uid: string) => {
       const userDocRef = doc(db, "users", uid);
 
       try {
@@ -142,8 +142,6 @@ export default function ChatRoom({
       await auth.signOut();
       router.replace("/");
    };
-
-  
    
    return (
       <div className={styles.container}>
@@ -158,8 +156,9 @@ export default function ChatRoom({
                   <button className={styles.logoutButton} onClick={handleLogout}>
                      Logout
                   </button>
-                  {/* {userDisplayName &&(<p className={styles.userInfoName}>{userDisplayName}</p>
-                  )}  */}
+                   {/* {userDisplayName &&
+                     (<p className={styles.userInfoName}>{userDisplayName}</p>
+                  )}   */}
                   </div>
                </div>
                <div className={styles.messages}>

@@ -1,49 +1,39 @@
 // app.tsx
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import styles from "./page.module.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc, collection, getFirestore, getDoc } from "firebase/firestore";
+import { setDoc, doc, collection, getFirestore } from "firebase/firestore";
 import { auth, app } from "../firebase/clientApp";
 import { sendEmailVerification } from "firebase/auth";
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import Modal from 'react-modal';
-
-
-interface DisplayNameModalProps {
-   isOpen: boolean;
-   onRequestClose: () => void;
-   onSubmit: (displayName: string) => void;
-}
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export default function Home() {
    const router = useRouter();
    const [loginData, setLoginData] = useState({ email: "", password: "" });
    const [registerData, setRegisterData] = useState({ email: "", password: "", displayName: "" });
    const [isLogin, setIsLogin] = useState(true);
-
-   const db = getFirestore(app);
    const [isLoading, setIsLoading] = useState(false);
-   const [modalIsOpen, setModalIsOpen] = useState(false);
 
    const startLoading = () => {
       setIsLoading(true);
    };
 
    const stopLoading = () => {
-      setIsLoading(false); 
-   };
+      setIsLoading(false);
+   }
+
+   const db = getFirestore(app);
 
    //Registration
    const handleRegister = async () => {
       try {
-         startLoading();
-
          const userCredential = await createUserWithEmailAndPassword(
             auth,
             registerData.email,
@@ -55,41 +45,20 @@ export default function Home() {
             user.uid,
             registerData.displayName,
             registerData.email
-         );
-
-         await sendEmailVerificationToUser(user.email);
-      } catch (error) {
-         console.error(error);
-      } finally {
-         stopLoading();
-      }
-   };
-
-   //Send Verification Email to User Email
-   const sendEmailVerificationToUser = async (user: String | null) => {
-      try {
-         startLoading();
-         await sendEmailVerification(auth.currentUser!).then(() => {
-            toast.info("Email verification has been sent to your email.");
+         ).then(() => {
+            sendEmailVerificationToUser(user.email);
          });
+         
+         await user.reload();
+         if(user.emailVerified){
+            router.push("/chats");
+         }
+
       } catch (error) {
          console.error(error);
       } finally {
          stopLoading();
       }
-   };
-
-   //Add User Details to Firestore
-   const addUserDataToFirestore = async (
-      uid: string,
-      displayName: string,
-      email: string
-   ) => {
-      await setDoc(doc(collection(db, "users"), uid), {
-         uid,
-         displayName,
-         email,
-      });
    };
 
    //Login
@@ -118,53 +87,61 @@ export default function Home() {
       }
    };
 
-   const handleToggle = () => {
-      setIsLogin(!isLogin);
-   };
-
-   const DisplayNameModal: React.FC<DisplayNameModalProps> = ({ isOpen, onRequestClose, onSubmit }) => {
-      const [displayName, setDisplayName] = useState('');
-    
-      const handleSubmit = () => {
-        // Call the onSubmit function with the entered display name
-        onSubmit(displayName);
-        setModalIsOpen(false);
-      };
-    
-      return (
-        <Modal isOpen={isOpen} onRequestClose={onRequestClose} className={styles.content} overlayClassName={styles.overlay}>
-          <h2>Enter Your Display Name</h2>
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-          <button onClick={handleSubmit}>Submit</button>
-        </Modal>
-      );
-    };
-
+   //Google Login
    const handleGoogleLogin = async () => {
       try {
+         startLoading();
+         const auth = getAuth();
          const provider = new GoogleAuthProvider();
-         const result = await signInWithPopup(auth, provider);
-         const user = result.user;
+         const userCredential = await signInWithPopup(auth, provider);
 
-         const userDocRef = doc(collection(db, 'users'), user.uid);
-         const userDocSnap = await getDoc(userDocRef);
-     
-         if (!userDocSnap.exists()) {
-            setModalIsOpen(true);
-            return; 
-          }
-     
-         // Display a success message or redirect the user
-         toast.success('Successfully signed in with Google.');
-         router.push('/chats');
-       } catch (error) {
+         const user = userCredential.user;
+
+         await addUserDataToFirestore(
+            user.uid,
+            user.displayName,
+            user.email,
+         ).then(() => {
+            router.push("/chats");
+            toast.success('Successfully signed in with Google');
+         });
+
+      } catch (error) {
          console.error(error);
-         toast.error('An error occurred while signing in with Google.');
-       }
+      } finally {
+         stopLoading();
+      }
+   };
+
+   //Add User Details to Firestore
+   const addUserDataToFirestore = async (
+      uid: string,
+      displayName: string | null,
+      email: string | null
+   ) => {
+      await setDoc(doc(collection(db, "users"), uid), {
+         uid,
+         displayName,
+         email,
+      });
+   };
+
+   //Send Verification Email to User Email
+   const sendEmailVerificationToUser = async (_user: String | null) => {
+      try {
+         startLoading();
+         await sendEmailVerification(auth.currentUser!).then(() => {
+            toast.info("Email verification has been sent to your email.");
+         });
+      } catch (error) {
+         console.error(error);
+      } finally {
+         stopLoading();
+      }
+   };
+
+   const handleToggle = () => {
+      setIsLogin(!isLogin);
    };
 
    return (
@@ -194,13 +171,13 @@ export default function Home() {
                      onChange={(e) =>
                         isLogin
                            ? setLoginData({
-                                ...loginData,
-                                email: e.target.value,
-                             })
+                              ...loginData,
+                              email: e.target.value,
+                           })
                            : setRegisterData({
-                                ...registerData,
-                                email: e.target.value,
-                             })
+                              ...registerData,
+                              email: e.target.value,
+                           })
                      }
                      className={styles.formInput}
                   />
@@ -210,17 +187,17 @@ export default function Home() {
                   Password:
                   <input
                      type="password"
-                     value={ isLogin ? loginData.password : registerData.password }
+                     value={isLogin ? loginData.password : registerData.password}
                      onChange={(e) =>
                         isLogin
                            ? setLoginData({
-                                ...loginData,
-                                password: e.target.value,
-                             })
+                              ...loginData,
+                              password: e.target.value,
+                           })
                            : setRegisterData({
-                                ...registerData,
-                                password: e.target.value,
-                             })
+                              ...registerData,
+                              password: e.target.value,
+                           })
                      }
                      className={styles.formInput}
                   />
@@ -274,13 +251,6 @@ export default function Home() {
          </div>
          <ToastContainer position="top-center" theme="dark" />
 
-         <DisplayNameModal
-            isOpen={modalIsOpen}
-            onRequestClose={() => setModalIsOpen(false)}
-            onSubmit={(displayName) => {
-               console.log('Submitted display name: ', displayName);
-            }}
-         />
       </div>
    );
 }
