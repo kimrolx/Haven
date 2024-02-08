@@ -1,6 +1,6 @@
 # Haven 
 
-Haven is a real-time chat web application built with Next.js, React, TypeScript, and Firebase. It allows users to securely log in with Google, and chat in real-time.
+Haven is a real-time chat web application built with Next.js, TypeScript, and Firebase. It allows users to securely log in with Google, and chat in real-time.
 
 ## Features
 
@@ -9,7 +9,6 @@ Haven is a real-time chat web application built with Next.js, React, TypeScript,
 ## Technologies Used
 
 - [Next.js](https://nextjs.org/)
-- [React](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Firebase](https://firebase.google.com/)
 
