@@ -6,6 +6,10 @@ body {
     @apply bg-background text-black dark:bg-black dark:text-white;
 }
 
+.centered {
+    @apply flex items-center justify-center h-full;
+}
+
 @layer base {
     :root {
         --background: 0 0% 100%;
